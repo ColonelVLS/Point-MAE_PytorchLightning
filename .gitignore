@@ -1,0 +1,6 @@
+*.pyc
+*.ckpt
+__pycache__/
+wandb/
+PICTUM/
+extensions/

@@ -1,0 +1,85 @@
+import torch
+import torch.nn as nn
+import pytorch_lightning as pl
+from extensions.chamfer_dist import ChamferDistanceL2
+
+
+
+class MAESystem(pl.LightningModule):
+
+    def __init__(self, ):
+        super().__init__()
+
+        self.embed_dim = 384
+        self.mask_token = nn.Parameter(torch.zeros(1, 1, self.embed_dim))
+        self.loss_func = ChamferDistanceL2()
+
+        self.configure_networks()
+
+    def forward(self, pts):
+        return self.encoder(pts)
+
+    def training_step(self, batch, batch_idx):
+
+        # 
+        neighborhood, center = self.group_devider(batch)
+
+        # TODO: Add masking as a separate module 
+
+        #
+        x_vis, mask = self.MAE_encoder(neighborhood, center)
+
+        # x_vis: B x P x F
+        # where
+        #   - B: batch_size
+        #   - P: number of patched that we keep
+        #   - F: feature dim
+        #
+        # mask : B x N x F
+        # where
+        #   - N: total number of patches
+        # mask has value 1 to the masked out points
+
+        B, _, C = x_vis.shape
+
+        # stacking centers [encoded centers, not encoded centers]
+        vis_centers = center[~mask]
+        mask_centers = center[mask]
+        pos_full = torch.cat([vis_centers, mask_centers], dim=1)
+
+        # repeating mask token to pass to the decoder
+        _, M, _ = mask_centers.shape
+        mask_token = self.mask_token.expand(B, M, -1)
+        
+        # concatenating actual features with mask features
+        # to pass to the decoder
+        x_full = torch.cat([x_vis, mask_token], dim=1)
+
+        # activating the decoder
+        x_rec = self.MAE_decoder(x_full, pos_full)
+        
+        # seperating the decoded features
+        x_rec = x_rec[:, -M:, :]
+
+        # passing patch embedding to final mlp to extract the actual point possitions
+        rebuild_points = self.increase_dim(x_rec.transpose(1, 2)).transpose(1, 2).reshape(B * M, -1, 3)
+        
+        # getting the ground truth points
+        gt_points = neighborhood[mask].reshape(B * M, -1, 3)
+
+        # computing the loss
+        loss = self.loss_func(rebuild_points, gt_points)
+
+        # logging the loss
+        self.log("loss", loss, on_epoch=True)
+
+        return loss
+        
+
+    def configure_networks(self):
+        # Define the following networks 
+        # self.groud_devider
+        # self.MAE_encoder
+        # self.MAE_decoder
+        # self.increase_dim
+        raise NotImplementedError
