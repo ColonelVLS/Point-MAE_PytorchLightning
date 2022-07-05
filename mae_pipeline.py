@@ -25,9 +25,17 @@ class MAESystem(pl.LightningModule):
         neighborhood, center = self.group_devider(batch)
 
         # TODO: Add masking as a separate module 
+        mask = self.mask_generator(center)
+
+        # center: B x N x 3
+        # neighborhood : B x N x M x 3
+        B, N, _, _ = neighborhood.shape
+
+        masked_center = center[~mask].reshape(B, -1, 3)
+        masked_neighborhood = neighborhood[~mask].reshape(B, N, -1, 3)
 
         #
-        x_vis, mask = self.MAE_encoder(neighborhood, center)
+        x_vis = self.MAE_encoder(masked_neighborhood, masked_center)
 
         # x_vis: B x P x F
         # where
@@ -79,6 +87,7 @@ class MAESystem(pl.LightningModule):
     def configure_networks(self):
         # Define the following networks 
         # self.groud_devider
+        # self.mask_generator
         # self.MAE_encoder
         # self.MAE_decoder
         # self.increase_dim
