@@ -29,10 +29,10 @@ class MAESystem(pl.LightningModule):
 
         # center: B x N x 3
         # neighborhood : B x N x M x 3
-        B, N, _, _ = neighborhood.shape
+        B, _, M, _ = neighborhood.shape
 
         masked_center = center[~mask].reshape(B, -1, 3)
-        masked_neighborhood = neighborhood[~mask].reshape(B, N, -1, 3)
+        masked_neighborhood = neighborhood[~mask].reshape(B, -1, M, 3)
 
         #
         x_vis = self.MAE_encoder(masked_neighborhood, masked_center)
@@ -51,8 +51,8 @@ class MAESystem(pl.LightningModule):
         B, _, C = x_vis.shape
 
         # stacking centers [encoded centers, not encoded centers]
-        vis_centers = center[~mask]
-        mask_centers = center[mask]
+        vis_centers = center[~mask].reshape(B, -1, 3)
+        mask_centers = center[mask].reshape(B, -1, 3)
         pos_full = torch.cat([vis_centers, mask_centers], dim=1)
 
         # repeating mask token to pass to the decoder
@@ -86,7 +86,7 @@ class MAESystem(pl.LightningModule):
 
     def configure_networks(self):
         # Define the following networks 
-        # self.groud_devider
+        # self.group_devider
         # self.mask_generator
         # self.MAE_encoder
         # self.MAE_decoder

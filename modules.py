@@ -283,7 +283,7 @@ class TransformerWithEmbeddings(nn.Module):
             num_heads=num_heads
         )
 
-        # output norm
+        # output norm - TODO: transfer to Transformer
         self.norm = nn.LayerNorm(embed_dim)
 
     def forward(self, neighs_of_feats, center):

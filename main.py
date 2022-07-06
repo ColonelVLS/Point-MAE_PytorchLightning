@@ -3,12 +3,12 @@ from modules import Group, Mask, TransformerWithEmbeddings
 
 import torch
 import torch.nn as nn
-
+from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 
 class PointMAEPretrain(MAESystem):
 
     def configure_networks(self):
-        self.groud_devider = Group(
+        self.group_devider = Group(
             group_size=32, 
             num_group=64
         )
@@ -38,4 +38,33 @@ class PointMAEPretrain(MAESystem):
         self.increase_dim = nn.Conv1d(384, 3 * 32, 1)
 
 
+    def configure_optimizers(self):
+        opt = torch.optim.AdamW(params=self.parameters() ,lr=0.001, weight_decay=0.05)
+        sched = LinearWarmupCosineAnnealingLR(opt, warmup_epochs=10, max_epochs=300, warmup_start_lr=1e-6, eta_min=1e-6)
+        return [opt], [sched]
 
+
+if __name__=="__main__":
+
+    import pytorch_lightning as pl
+    from pytorch_lightning.loggers import WandbLogger
+    from pytorch_lightning.callbacks import LearningRateMonitor
+    from dl_lib.datasets.shapenet import ShapeNet55
+    from torch.utils.data import DataLoader
+
+    data_path = "/home/ioannis/Desktop/programming/data/ShapeNet55-34"
+    dataset = ShapeNet55(data_path, 'train')
+
+    train_loader = DataLoader(dataset, 32, shuffle=True, num_workers=8)
+    
+    model = PointMAEPretrain()
+
+    lr_monitor = LearningRateMonitor()
+
+    logger = WandbLogger(project="Point-MAE")
+    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=300, logger=logger,
+                        callbacks=[lr_monitor])
+    
+    
+    trainer.fit(model, train_dataloaders=train_loader)
+    
