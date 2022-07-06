@@ -103,4 +103,4 @@ class MAESystem(pl.LightningModule):
             'MAE_encoder'   : self.MAE_encoder.state_dict(),
             'MAE_decoder'   : self.MAE_decoder.state_dict(),
             'increase_dim'  : self.increase_dim.state_dict()
-        })
+        }, path)
