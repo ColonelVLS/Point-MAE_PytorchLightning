@@ -4,3 +4,4 @@ __pycache__/
 wandb/
 PICTUM/
 extensions/
+custom_checkpoints/

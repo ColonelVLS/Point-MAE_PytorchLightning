@@ -4,7 +4,6 @@ import pytorch_lightning as pl
 from extensions.chamfer_dist import ChamferDistanceL2
 
 
-
 class MAESystem(pl.LightningModule):
 
     def __init__(self, ):
@@ -17,7 +16,9 @@ class MAESystem(pl.LightningModule):
         self.configure_networks()
 
     def forward(self, pts):
-        return self.encoder(pts)
+        neighborhood, center = self.group_devider(pts)
+        x_vis = self.MAE_encoder(neighborhood, center)
+        return x_vis
 
     def training_step(self, batch, batch_idx):
 
@@ -92,3 +93,14 @@ class MAESystem(pl.LightningModule):
         # self.MAE_decoder
         # self.increase_dim
         raise NotImplementedError
+
+
+    def save_submodules(self, path):
+        # Saves the parameters of the submodules
+        torch.save({
+            'group_devider' : self.group_devider.state_dict(),
+            'mask_generator': self.mask_generator.state_dict(),
+            'MAE_encoder'   : self.MAE_encoder.state_dict(),
+            'MAE_decoder'   : self.MAE_decoder.state_dict(),
+            'increase_dim'  : self.increase_dim.state_dict()
+        })
