@@ -251,9 +251,13 @@ class Transformer(nn.Module):
             )
         for i in range(depth)])
 
+        # output norm 
+        self.norm = nn.LayerNorm(embed_dim)
+
     def forward(self, x, pos):
         for block in self.blocks:
             x = block(x + pos) # NOTE: add the positional embedding at every layer (why?)
+        x = self.norm(x)
         return x
 
 class TransformerWithEmbeddings(nn.Module):
@@ -283,8 +287,6 @@ class TransformerWithEmbeddings(nn.Module):
             num_heads=num_heads
         )
 
-        # output norm - TODO: transfer to Transformer
-        self.norm = nn.LayerNorm(embed_dim)
 
     def forward(self, neighs_of_feats, center):
 
@@ -299,9 +301,6 @@ class TransformerWithEmbeddings(nn.Module):
 
         # Activating the transformer layers
         x_vis = self.blocks(x_vis, pos)
-
-        # Output norm 
-        x_vis = self.norm(x_vis)
 
         return x_vis
 
