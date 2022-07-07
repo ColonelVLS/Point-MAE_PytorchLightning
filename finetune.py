@@ -1,10 +1,12 @@
-from model import Point_MAE_pl
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from torchmetrics import Accuracy
 from dl_lib.datasets.ready_datasets import get_ModelNet40
+
+from modules import Group, TransformerWithEmbeddings
 
 def cal_loss(pred, gold, smoothing=True):
     ''' Calculate cross entropy loss, apply label smoothing if needed. '''
@@ -29,22 +31,49 @@ def cal_loss(pred, gold, smoothing=True):
 #    Classification System    #
 ###############################
 
-class Point_MAE_finetune_pl(Point_MAE_pl):
+class Point_MAE_finetune_pl(pl.LightningModule):
     def __init__(self):
         super().__init__()
 
         self.train_acc = Accuracy()
         self.valid_acc = Accuracy()
+    
+        self.configure_networks()
 
-    def forward(self, x):
-        return self.net(x)
+    def configure_networks(self):
+        self.group_devider = Group(
+            group_size=32, 
+            num_group=64
+        )
+
+        self.MAE_encoder = TransformerWithEmbeddings(
+            embed_dim=384,
+            depth=12, 
+            num_heads=6, 
+            drop_path_rate=0.1, 
+            feature_embed=True
+        )
+
+        self.cls_head = nn.Sequential(
+            nn.Linear(384, 512, bias=False),
+            nn.BatchNorm1d(512),
+            nn.ReLU(),
+            nn.Linear(512, 40)
+        )
+
+    def forward(self, pts):
+        neighborhood, center = self.group_devider(pts)
+        x_vis = self.MAE_encoder(neighborhood, center)
+        feature_vector = torch.max(x_vis, dim=1).values
+        logits = self.cls_head(feature_vector)
+        return logits
 
     def training_step(self, batch, batch_idx):        
 
         # training step
         x, y = batch
 
-        logits = self.net(x.permute(0,2,1))
+        logits = self.forward(x)
         loss = cal_loss(logits, y)
 
         # logging loss
@@ -61,7 +90,7 @@ class Point_MAE_finetune_pl(Point_MAE_pl):
     def validation_step(self, batch, batch_idx):
 
         x, y = batch 
-        logits = self.net(x.permute(0, 2, 1))
+        logits = self.forward(x)
         loss = cal_loss(logits, y)
         self.log("val_loss", loss)
         
@@ -73,22 +102,32 @@ class Point_MAE_finetune_pl(Point_MAE_pl):
 
     def configure_optimizers(self):
         opt = torch.optim.Adam(self.parameters(), lr=0.001)
-
         return opt
 
 
-if __name__=="__main__":
+    def load_submodules(self, path):
+        # loading pretrained submodules
+        checkpoint = torch.load(path)
+        self.group_devider.load_state_dict(checkpoint['group_devider'])
+        self.MAE_encoder.load_state_dict(checkpoint['MAE_encoder'])
+
+        # freeze submodules
+        for param in self.MAE_encoder.parameters():
+            param.requires_grad = False
+
+
+
+
+if __name__ == "__main__":
 
     path = '/home/ioannis/Desktop/programming/phd/PCT_Pytorch/data'
     train_loader, valid_loader = get_ModelNet40(path, 'original')
 
-    checkpoint_path = "/home/ioannis/Desktop/programming/phd/PointViT/Point-MAE/1lkzfn0m/checkpoints/epoch=73-step=97014.ckpt"
-    model = Point_MAE_finetune_pl.load_from_checkpoint(checkpoint_path)
+    model = Point_MAE_finetune_pl()
+    model.load_submodules("/home/ioannis/Desktop/programming/phd/PointViT/custom_checkpoints/test_ckpt.pt")
 
-    trainer = pl.Trainer()
-    
     project_name = "FINETUNING POINT_MAE" 
     logger = WandbLogger(project=project_name) 
 
-    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=300, logger=logger)
+    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=5, logger=logger)
     trainer.fit(model, train_loader, valid_loader)
