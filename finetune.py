@@ -106,14 +106,15 @@ class Point_MAE_finetune_pl(pl.LightningModule):
 
 
     def load_submodules(self, path):
+        pass
         # loading pretrained submodules
-        checkpoint = torch.load(path)
-        self.group_devider.load_state_dict(checkpoint['group_devider'])
-        self.MAE_encoder.load_state_dict(checkpoint['MAE_encoder'])
+        #checkpoint = torch.load(path)
+        #self.group_devider.load_state_dict(checkpoint['group_devider'])
+        #self.MAE_encoder.load_state_dict(checkpoint['MAE_encoder'])
 
         # freeze submodules
-        for param in self.MAE_encoder.parameters():
-            param.requires_grad = False
+        #for param in self.MAE_encoder.parameters():
+        #    param.requires_grad = False
 
 
 
@@ -129,5 +130,5 @@ if __name__ == "__main__":
     project_name = "FINETUNING POINT_MAE" 
     logger = WandbLogger(project=project_name) 
 
-    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=5, logger=logger)
+    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=300, logger=logger)
     trainer.fit(model, train_loader, valid_loader)
