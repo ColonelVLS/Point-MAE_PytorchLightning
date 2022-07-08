@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
+from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
+
 from torchmetrics import Accuracy
 from dl_lib.datasets.ready_datasets import get_ModelNet40
 
@@ -101,20 +103,20 @@ class Point_MAE_finetune_pl(pl.LightningModule):
         self.log("test_accuracy", self.valid_acc, on_epoch=True, on_step=False)
 
     def configure_optimizers(self):
-        opt = torch.optim.Adam(self.parameters(), lr=0.001)
-        return opt
+        opt = torch.optim.AdamW(params=self.parameters() ,lr=0.0005, weight_decay=0.05)
+        sched = LinearWarmupCosineAnnealingLR(opt, warmup_epochs=10, max_epochs=300, warmup_start_lr=1e-6, eta_min=1e-6)
+        return [opt], [sched]
 
 
     def load_submodules(self, path):
-        pass
         # loading pretrained submodules
-        #checkpoint = torch.load(path)
-        #self.group_devider.load_state_dict(checkpoint['group_devider'])
-        #self.MAE_encoder.load_state_dict(checkpoint['MAE_encoder'])
+        checkpoint = torch.load(path)
+        self.group_devider.load_state_dict(checkpoint['group_devider'])
+        self.MAE_encoder.load_state_dict(checkpoint['MAE_encoder'])
 
         # freeze submodules
-        #for param in self.MAE_encoder.parameters():
-        #    param.requires_grad = False
+        # for param in self.MAE_encoder.parameters():
+        #   param.requires_grad = False
 
 
 
@@ -125,7 +127,7 @@ if __name__ == "__main__":
     train_loader, valid_loader = get_ModelNet40(path, 'original')
 
     model = Point_MAE_finetune_pl()
-    #model.load_submodules("/home/ioannis/Desktop/programming/phd/PointViT/custom_checkpoints/test_ckpt.pt")
+    model.load_submodules("/home/ioannis/Desktop/programming/phd/PointViT/Point-MAE/3arjutys/checkpoints/epoch=299-step=393300.ckpt")
 
     project_name = "FINETUNING POINT_MAE" 
     logger = WandbLogger(project=project_name) 

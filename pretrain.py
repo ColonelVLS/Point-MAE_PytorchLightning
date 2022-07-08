@@ -62,7 +62,7 @@ if __name__=="__main__":
     lr_monitor = LearningRateMonitor()
 
     logger = WandbLogger(project="Point-MAE")
-    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=5, logger=logger,
+    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=300, logger=logger,
                         callbacks=[lr_monitor])
         
     trainer.fit(model, train_dataloaders=train_loader)
