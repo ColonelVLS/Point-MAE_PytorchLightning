@@ -125,7 +125,7 @@ if __name__ == "__main__":
     train_loader, valid_loader = get_ModelNet40(path, 'original')
 
     model = Point_MAE_finetune_pl()
-    model.load_submodules("/home/ioannis/Desktop/programming/phd/PointViT/custom_checkpoints/test_ckpt.pt")
+    #model.load_submodules("/home/ioannis/Desktop/programming/phd/PointViT/custom_checkpoints/test_ckpt.pt")
 
     project_name = "FINETUNING POINT_MAE" 
     logger = WandbLogger(project=project_name) 
