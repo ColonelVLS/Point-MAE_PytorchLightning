@@ -159,10 +159,11 @@ if __name__ == "__main__":
     train_loader, valid_loader = get_ModelNet40(path, 'normalized')
 
     model = Point_MAE_finetune_pl()
-    model.load_submodules("/home/ioannis/Desktop/programming/phd/PointViT/custom_checkpoints/test.pt")
+    model.load_submodules("/home/ioannis/Desktop/programming/phd/PointViT/custom_checkpoints/test2.pt", 
+                          freeze_backbone=False)
 
     project_name = "FINETUNING POINT_MAE" 
     logger = WandbLogger(project=project_name) 
 
-    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=300, logger=logger, callbacks=[UnfreezeBackbone(100)])
+    trainer = pl.Trainer(accelerator='gpu', devices=1, max_epochs=300, logger=logger) #, callbacks=[UnfreezeBackbone(100)])
     trainer.fit(model, train_loader, valid_loader)
