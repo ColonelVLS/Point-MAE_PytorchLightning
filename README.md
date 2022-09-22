@@ -8,5 +8,5 @@ We also use PytorchLightning to make this even more reproducable and easy to und
 Clone this repo. Do not forget to add --recursive at the end of the clone command to also clone
 the proper version of *dl_lib*.
 
-You also have to download and build the extension folder from the original Point-MAE repo. 
+You also have to download and build the *extensions* folder from the original Point-MAE repo. 
 
