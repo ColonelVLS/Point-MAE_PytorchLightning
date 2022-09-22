@@ -1,8 +1,0 @@
-*.pyc
-*.ckpt
-__pycache__/
-wandb/
-PICTUM/
-extensions/
-custom_checkpoints/
-old_files/
