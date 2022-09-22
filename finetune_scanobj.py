@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from modules import Group, TransformerWithEmbeddings
-from finetune_pipeline import Point_MAE_finetune_pl
+from pipelines.finetune_pipeline import Point_MAE_finetune_pl
 from dl_lib.datasets import get_scanObjectNN
 
 

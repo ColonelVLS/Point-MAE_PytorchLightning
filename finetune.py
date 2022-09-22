@@ -9,7 +9,7 @@ from torchmetrics import Accuracy
 from dl_lib.datasets.ready_datasets import get_ModelNet40
 from modules import Group, TransformerWithEmbeddings
 
-from finetune_pipeline import Point_MAE_finetune_pl
+from pipelines.finetune_pipeline import Point_MAE_finetune_pl
 
 
 class PointMAEModelNet40(Point_MAE_finetune_pl):
