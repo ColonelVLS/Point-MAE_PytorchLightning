@@ -1,4 +1,4 @@
-from mae_pipeline import MAESystem
+from pipelines.mae_pipeline import MAESystem
 from modules import Group, Mask, TransformerWithEmbeddings
 
 import torch
