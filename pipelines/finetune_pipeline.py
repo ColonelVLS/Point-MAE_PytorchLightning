@@ -115,6 +115,15 @@ class Point_MAE_finetune_pl(pl.LightningModule):
         if freeze_backbone:
             self.freeze_backbone()
 
+    def save_submodules(self, path):
+        # Saves the parameters of the submodules
+        torch.save({
+            'group_devider' : self.group_devider.state_dict(),
+            'MAE_encoder'   : self.MAE_encoder.state_dict(),
+            'cls_head'      : self.cls_head.state_dict()
+        }, path)
+
+
     def freeze_backbone(self):
         #print("freeze")
         for param in self.MAE_encoder.parameters():
