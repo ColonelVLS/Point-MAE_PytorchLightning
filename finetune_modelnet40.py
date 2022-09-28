@@ -3,9 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning import Callback
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
-from torchmetrics import Accuracy
 from dl_lib.datasets.ready_datasets import get_ModelNet40
 from modules import Group, TransformerWithEmbeddings
 
