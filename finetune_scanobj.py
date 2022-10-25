@@ -16,7 +16,7 @@ class PointMAEScanObjectNN(Point_MAE_finetune_pl):
     def configure_networks(self):
         self.group_devider = Group(
             group_size=32, 
-            num_group=64
+            num_group=128
         )
 
         self.MAE_encoder = TransformerWithEmbeddings(
