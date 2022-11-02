@@ -1,0 +1,33 @@
+dataset: modelnet
+task: finetune
+
+wandb:
+  project: FINETUNING POINT_MAE
+  name: finetune_example
+
+load_checkpoint : example_checkpoint
+save_checkpoint : example_checkpoint
+
+network:
+  group_devider: 
+    group_size: 32
+    num_group: 64
+
+  MAE_encoder: 
+    embed_dim: 384
+    depth: 1
+    num_heads: 1
+    drop_path_rate: 0.1
+    feature_embed: true
+  
+  # the feature dimension for the cls_head depends on the 
+  # number of pooled feature vectors
+  use_cls_token: false
+  use_max_pooling: true
+  use_mean_pooling: true
+
+training: 
+  num_epochs: 300
+  freeze_backbone: false
+  unfeeze_at_epoch: false
+
