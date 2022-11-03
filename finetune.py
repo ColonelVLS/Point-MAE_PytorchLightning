@@ -16,9 +16,8 @@ class PointMAECLS(Point_MAE_finetune_pl):
     def __init__(self, cfg):
         self.cfg = cfg
         super().__init__(cfg['dataset']['num_classes'])
-        
-        self.load_submodules()
 
+        self.load_submodules()
         self._raise_warnings_for_not_implemented
 
     def _raise_warnings_for_not_implemented(self):
@@ -165,8 +164,6 @@ if __name__=="__main__":
     train_loader, valid_loader = get_cls_dataloader(cfg)
 
     model = PointMAECLS(cfg)
-
-    model.save_submodules()
 
     logger = WandbLogger(
         project=cfg['wandb']['project'],
