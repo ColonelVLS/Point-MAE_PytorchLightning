@@ -288,7 +288,7 @@ class TransformerWithEmbeddings(nn.Module):
         )
 
 
-    def forward(self, neighs_of_feats, center):
+    def forward(self, neighs_of_feats, center, cls_token=None):
 
         # If feature_embed == False, then the network expects the neighborhood 
         # features as an input and uses an Identity layer as point encoder.
@@ -298,6 +298,12 @@ class TransformerWithEmbeddings(nn.Module):
 
         # Extracting positional embeddings
         pos = self.pos_embedding(center)
+        
+        if cls_token is not None:
+            b = x_vis.shape[0]
+            cls_token = cls_token.expand(b, 1, -1)
+            x_vis = torch.cat([x_vis, cls_token], dim=1)
+            pos = torch.cat([pos, cls_token.new_zeros(cls_token.shape)], dim=1)
 
         # Activating the transformer layers
         x_vis = self.blocks(x_vis, pos)

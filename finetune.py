@@ -22,10 +22,7 @@ class PointMAECLS(Point_MAE_finetune_pl):
 
     def _raise_warnings_for_not_implemented(self):
         
-        # cls_token is not implemented
-        if self.cfg['network']['use_cls_token']:
-            print("cls token is not implemented in the training pipeline yet")
-            # TODO: add cls token to transformer
+        pass
         
 
     def configure_networks(self):
@@ -53,6 +50,9 @@ class PointMAECLS(Point_MAE_finetune_pl):
                           embed_dim * self.use_max_pooling + \
                           embed_dim * self.use_mean_pooling
 
+        self.cls_token = torch.nn.Parameter(torch.rand(1, 1, net_cfg['MAE_encoder']['embed_dim'])) \
+            if net_cfg['use_cls_token'] else None
+        
 
         self.cls_head = nn.Sequential(
             nn.Linear(cls_in_features, 256, bias=False),
@@ -97,7 +97,7 @@ class PointMAECLS(Point_MAE_finetune_pl):
 
     def forward(self, pts):
         neighborhood, center = self.group_devider(pts)
-        x_vis = self.MAE_encoder(neighborhood, center)
+        x_vis = self.MAE_encoder(neighborhood, center, self.cls_token)
         feature_vector = self.pool_features(x_vis)
         logits = self.cls_head(feature_vector)
         return logits
@@ -112,7 +112,7 @@ class PointMAECLS(Point_MAE_finetune_pl):
             path = os.getcwd()
             path = os.path.join(path, 
                                 'finetuned_checkpoints',
-                                 cfg['save_checkpoint'] + '.pt')
+                                 self.cfg['save_checkpoint'] + '.pt')
            
             torch.save({
             'group_devider' : self.group_devider.state_dict(),
@@ -126,7 +126,7 @@ class PointMAECLS(Point_MAE_finetune_pl):
             path = os.getcwd()
             path = os.path.join(path, 
                                 'pretrained_checkpoints',
-                                 cfg['load_checkpoint'] + '.pt')
+                                 self.cfg['load_checkpoint'] + '.pt')
 
             checkpoint = torch.load(path)
             self.group_devider.load_state_dict(checkpoint['group_devider'])
@@ -152,12 +152,7 @@ def configure_callbacks(cfg):
     return callbacks
 
 
-if __name__=="__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-cfg_name', type=str, default='finetune_example')
-    parser.add_argument('-cfg_path', default=None)
-
+def main(parser):
     args = parser.parse_args()
     cfg = MyYamlLoader(cfg_name=args.cfg_name, path=args.cfg_path).cfg
 
@@ -183,3 +178,12 @@ if __name__=="__main__":
     trainer.fit(model, train_loader, valid_loader)
 
     model.save_submodules()
+
+
+if __name__=="__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-cfg_name', type=str, default='finetune_unfreeze')
+    parser.add_argument('-cfg_path', default=None)
+
+    main(parser)
