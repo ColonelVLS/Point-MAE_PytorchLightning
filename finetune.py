@@ -113,13 +113,18 @@ class PointMAECLS(Point_MAE_finetune_pl):
             path = os.path.join(path, 
                                 'finetuned_checkpoints',
                                  self.cfg['save_checkpoint'] + '.pt')
-           
-            torch.save({
-            'group_devider' : self.group_devider.state_dict(),
-            'MAE_encoder'   : self.MAE_encoder.state_dict(),
-            'cls_head'      : self.cls_head.state_dict(),
-            'cfg'           : self.cfg
-        }, path)
+            
+            save_dict = {
+                    'group_devider' : self.group_devider.state_dict(),
+                    'MAE_encoder'   : self.MAE_encoder.state_dict(),
+                    'cls_head'      : self.cls_head.state_dict(),
+                    'cfg'           : self.cfg
+                }
+
+            if self.cfg['network']['use_cls_token']:
+                save_dict['cls_token'] = self.cls_token.detach().cpu()
+
+            torch.save(save_dict, path)
 
     def load_submodules(self):
         if self.cfg['load_checkpoint']:
@@ -135,6 +140,10 @@ class PointMAECLS(Point_MAE_finetune_pl):
             if 'cls_head' in checkpoint.keys():
                 self.cls_head.load_state_dict(checkpoint['cls_head'])
 
+            if 'cls_token' in checkpoint.keys():
+                print(type(self.cls_token))
+                self.cls_token = torch.nn.Parameter(checkpoint['cls_token'])
+                print(type(self.cls_token))
 
 def configure_callbacks(cfg):
     training_cfg = cfg['training']
